@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'observability-example'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.1.9:9999']  # replace with your app host:port
