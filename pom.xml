@@ -52,11 +52,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- micrometer works as facade for promethus or otel. if we need only metrics then -->
         <dependency>
             <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.16.2</version> <!-- use latest stable version -->
+            <artifactId>micrometer-registry-otlp</artifactId>
+            <version>1.16.2</version>
         </dependency>
+
+        <!--in case of otel collector spring will send metrics to otel-collector-1-->
+        <!--<dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.16.2</version>
+        </dependency>-->
 
 
     </dependencies>
