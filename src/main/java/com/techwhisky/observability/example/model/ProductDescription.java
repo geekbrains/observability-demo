@@ -1,6 +1,6 @@
 package com.techwhisky.observability.example.model;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,16 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class Product {
-
-    private int id;
-
-    private String name;
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ProductDescription {
 
     private String description;
-
-    private double price;
-
-    private int discount;
 }

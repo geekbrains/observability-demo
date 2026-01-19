@@ -9,10 +9,17 @@ processors:
   batch:
 
 exporters:
+  debug:
+    verbosity: detailed
   prometheus:
     endpoint: "0.0.0.0:8889"
     const_labels:
       label1: value1
+  zipkin:
+    endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+    format: proto
+  otlphttp: #jager was supported in older version, now we need to use otlp
+    endpoint: "http://jaeger-all-in-one:4319"
 
 # https://github.com/open-telemetry/opentelemetry-collector/blob/main/extension/README.md
 extensions:
@@ -30,3 +37,7 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug,zipkin,otlphttp]

@@ -16,9 +16,11 @@ services:
       - "8889:8889" # Prometheus exporter metrics
       - "13133:13133" # health_check extension
       - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP http receiver
+      - "4318:4318" # OTLP http receiverol
       - "55679:55679" # zpages extension
-
+    depends_on:
+      - jaeger-all-in-one
+      - zipkin-all-in-one
 
   prometheus:
     container_name: prometheus
@@ -39,3 +41,27 @@ services:
     restart: always
     ports:
       - "3000:3000"
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+      - "4319:4318"
+
+  # Zipkin
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    restart: always
+    ports:
+      - "9411:9411"
+
+#  observability-demo:
+#    image: observability:latest
+#    container_name: observability-example
+#    restart: always
+#    ports:
+#      - "9999:9999"

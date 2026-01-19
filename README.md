@@ -1,45 +1,103 @@
-# Otel collector integration with spring boot
+## add tracing support in the application
+### Add depdendency in pom.xml
+```xml
+<!--bridges the Micrometer Observation API to OpenTelemetry-->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+            <version>1.6.2</version>
+        </dependency>
 
-- Add micrometer-registry-otlp lib in the project
-- make sure actuator dependency is also there.
-
-micrometer is a facade to integrate promethus, otel, grafana
-while actuator gives metrics and autoconfigure micrometer
-
-we need to add micrometer configuration in springboot application
+        <!-- reports traces to otel collector.-->
+        <!-- Source: https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-otlp -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+            <version>1.58.0</version>
+        </dependency>
+```
+### add configuration in application yaml
 ```yaml
 management:
-    metrics:
-        exporter:
-            otlp:
-              enabled: true
-              endpoint: http://localhost:4318/v1/metrics # otel collector receiver is reciving from this location
-              step: 10s # in every 10 second it will publish metrics on this endpoint
-
+  endpoints:
+    web:
+      exposure:
+        include: health
+  metrics:
+    export:
+      otlp:
+        enabled: true
+        endpoint: http://localhost:4318/v1/metrics
+        step: 10s
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+  tracing:
+    sampling:
+      probability: 1 # every request is sent to the trace backend.
 ```
-## otel-collector configuration
-in otel collector configuration, in receiver we can give otlp point.
-if application is in same cluster of docker network, we can use localhost otherwise we can use 0.0.0.0:4318
-in exporter section we need to provide the endpoint where otel will expose metrics for promethus.
-so we can give
+### update docker-compose file with zipkins and jager.
 ```yaml
-exporters:
+version: '3.8'
+
+services:
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:0.143.0
+    restart: always
+    volumes:
+      - ./src/docker/otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/otel-collector-config.yml
+    command:
+      - --config=/etc/otelcol-contrib/otel-collector-config.yml
+    ports:
+      - "1888:1888" # pprof extension
+      - "8888:8888" # Prometheus metrics exposed by the Collector
+      - "8889:8889" # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP http receiver
+      - "55679:55679" # zpages extension
+    depends_on:
+      - jaeger-all-in-one
+      - zipkin-all-in-one
+
   prometheus:
-    endpoint: "0.0.0.0:8889"
-    const_labels:
-      label1: value1
+    container_name: prometheus
+    image: prom/prometheus:latest
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./src/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+#    extra_hosts:
+#      - "host.docker.internal:192.168.1.9"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    restart: always
+    ports:
+      - "3000:3000"
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  # Zipkin
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    restart: always
+    ports:
+      - "9411:9411"
 ```
-
-in prometheus.yml file we need to define same endpoint in scraping config--> targets section
-```yaml
-scrape_configs:
-  - job_name: 'otel-collector'
-    static_configs:
-      - targets: ['otel-collector:8889']  # replace with your app host:port
-```
-here targets is having docker service name as otel and promethus are running inside docker
-so they can understand each other name
-
-
-
-
+both jager and zipkins are distributed tracing applications where you can trace request with span

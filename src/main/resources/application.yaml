@@ -6,6 +6,11 @@ server:
   address: 0.0.0.0
   port: 9999
 
+product:
+  description:
+    service:
+      endpoint: https://4750bb26-fede-4095-af45-316ccec93653.mock.pstmn.io
+
 management:
   endpoints:
     web:
@@ -17,3 +22,11 @@ management:
         enabled: true
         endpoint: http://localhost:4318/v1/metrics
         step: 10s
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0 # every request is sent to the trace backend.
+
