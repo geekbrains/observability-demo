@@ -2,19 +2,23 @@
 ### Add depdendency in pom.xml
 ```xml
 <!--bridges the Micrometer Observation API to OpenTelemetry-->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-tracing-bridge-otel</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-
-        <!-- reports traces to otel collector.-->
-        <!-- Source: https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-otlp -->
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-exporter-otlp</artifactId>
-            <version>1.58.0</version>
-        </dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+</dependency> 
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-otlp</artifactId>
+</dependency> 
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>1.2.3</version> <!-- Boot aligns this separately -->
+</dependency>
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-exporter-otlp</artifactId>
+</dependency>
 ```
 ### add configuration in application yaml
 ```yaml
@@ -57,7 +61,7 @@ services:
       - "8888:8888" # Prometheus metrics exposed by the Collector
       - "8889:8889" # Prometheus exporter metrics
       - "13133:13133" # health_check extension
-      - "4317:4317" # OTLP gRPC receiver
+   #   - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP http receiver
       - "55679:55679" # zpages extension
     depends_on:
@@ -92,6 +96,7 @@ services:
       - "16686:16686"
       - "14268"
       - "14250"
+      - "4317:4317"  
 
   # Zipkin
   zipkin-all-in-one:
